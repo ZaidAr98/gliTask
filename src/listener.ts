@@ -9,7 +9,7 @@ const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule,
   transport: Transport.RMQ,
   options: {
     urls: [process.env.RABBITMQ_URL as string],
-    queue: 'productService_queue',
+    queue: 'order-productService_queue',
     queueOptions: {
       durable: false
     },
