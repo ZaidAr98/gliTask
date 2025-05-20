@@ -1,33 +1,49 @@
-# Product Service - Microservices System with NestJS, Prisma & MySQL
+# Product & Order Microservices System
 
-This repository contains the **Product Service**, which is one part of a microservices architecture for managing products and orders. The system is built using **NestJS**, **Prisma ORM**, **MySQL**, and **RabbitMQ** for asynchronous communication between services.
+This repository contains two independent but interconnected microservices:
+
+- Product Service
+- Order Service
+
+They are built using **NestJS**, **Prisma ORM**, **MySQL**, and **RabbitMQ** for asynchronous communication. This system demonstrates a modular, scalable backend architecture using event-driven microservices.
+
+---
 
 ## Overview
 
-The Product Service provides APIs and message handlers to manage product data. It communicates with the **Order Service**, allowing orders to be validated and processed based on product availability and stock levels.
+- **Product Service**: Manages products, including CRUD operations and stock management.
+- **Order Service**: Handles order creation, validates product availability, and deducts stock.
 
-## Related Services
+The two services communicate via **RabbitMQ** message queues using NestJS microservice patterns.
 
-- **Order Service** (separate repository or module):  
-  Responsible for managing orders and ensuring product stock is available before processing. It communicates with this Product Service using RabbitMQ message patterns.
+---
 
-## Features
+## Microservices Structure
 
-- Full CRUD operations for product data
-- Input validation using DTOs and `class-validator`
-- Prisma for database access and migrations
-- RabbitMQ for inter-service communication
-- Swagger-based API documentation
-- Prevents deletion of products that are part of existing orders (assume inter-service check)
+### Product Service
 
-## Technologies Used
+- Full CRUD for products
+- Stock update and validation
+- Prevent deletion of products with active orders
+- Exposes HTTP endpoints and handles RabbitMQ messages
 
-- NestJS
-- Prisma ORM
-- MySQL
-- RabbitMQ
-- Swagger
-- class-validator
+### Order Service
+
+- Creates orders after validating product existence and stock
+- Reduces product stock after successful order
+- Queries order by product ID
+- Communicates with Product Service via RabbitMQ
+
+---
+
+## Inter-Service Communication
+
+| From          | To            | Pattern               | Purpose                           |
+|---------------|---------------|-----------------------|-----------------------------------|
+| Order Service | Product Service | `check-product`       | Validate product before ordering  |
+| Order Service | Product Service | `reduce-stock`        | Reduce stock after order          |
+| Product Service | Order Service | `check-product-orders` | Check if product has orders before deletion |
+
 
 
 
