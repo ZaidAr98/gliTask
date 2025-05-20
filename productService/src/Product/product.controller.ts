@@ -18,12 +18,24 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { plainToInstance } from 'class-transformer';
 import { ReduceStockDto } from './dto/reduce-stock.dto';
 import { validateOrReject } from 'class-validator';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a product by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ status: 200, description: 'Product retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID or retrieval error' })
   async getProduct(@Param('id', ParseIntPipe) id: number): Promise<Product> {
     try {
       const product = await this.productService.getProductById(id);
@@ -38,6 +50,10 @@ export class ProductController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all products' })
+  @ApiResponse({ status: 200, description: 'List of products retrieved' })
+  @ApiResponse({ status: 404, description: 'No products found' })
+  @ApiResponse({ status: 400, description: 'Failed to retrieve products' })
   async getProducts(): Promise<Product[]> {
     try {
       const products = await this.productService.getAllProducts();
@@ -54,6 +70,10 @@ export class ProductController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new product' })
+  @ApiBody({ type: CreateProductDto })
+  @ApiResponse({ status: 201, description: 'Product created successfully' })
+  @ApiResponse({ status: 400, description: 'Failed to create product' })
   async createProduct(
     @Body() createProductDto: CreateProductDto,
   ): Promise<Product> {
@@ -66,6 +86,12 @@ export class ProductController {
   }
 
   @Patch('update/:id')
+  @ApiOperation({ summary: 'Update a product by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateProductDto })
+  @ApiResponse({ status: 200, description: 'Product updated successfully' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  @ApiResponse({ status: 400, description: 'Failed to update product' })
   async updateProduct(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductDto: UpdateProductDto,
@@ -75,7 +101,7 @@ export class ProductController {
       if (!product) {
         throw new NotFoundException('Product not found');
       }
-       return await this.productService.update(id, updateProductDto);
+      return await this.productService.update(id, updateProductDto);
     } catch (error) {
       console.error('Update error:', error);
       throw new BadRequestException('Failed to update product');
@@ -83,6 +109,11 @@ export class ProductController {
   }
 
   @Delete('delete/:id')
+  @ApiOperation({ summary: 'Delete a product by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ status: 200, description: 'Product deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  @ApiResponse({ status: 400, description: 'Failed to delete product' })
   async deleteProduct(@Param('id') id: number) {
     try {
       const product = await this.productService.getProductById(id);
