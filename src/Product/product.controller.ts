@@ -1,8 +1,12 @@
 import { BadRequestException, Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ProductService } from './product.service';
-import { CreateProductDto } from './dto/CreateProduct';
+import { CreateProductDto } from './dto/create-product.dto';
 import { Product } from '@prisma/client';
-import { UpdateProductDto } from './dto/UpdateProductDto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { plainToInstance } from 'class-transformer';
+import { ReduceStockDto } from './dto/reduce-stock.dto';
+import { validateOrReject } from 'class-validator';
 
 @Controller('products')
 export class ProductController {
@@ -40,7 +44,7 @@ export class ProductController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<Product>{
  try {
-       const product  = await this.productService.getProduct(id);
+       const product  = await this.productService.getProductById(id);
     if(!product){
          throw new NotFoundException('Product not found')
     }
@@ -50,6 +54,7 @@ export class ProductController {
       throw new BadRequestException('Failed to get product'); 
  }
   }
+ 
 
 
 
@@ -69,6 +74,31 @@ export class ProductController {
     }
   }
 
+
+
+  @MessagePattern('check-product')
+  async handleCheckProduct(@Payload() data: { productId: number }) {
+    const product = await this.productService.getProductById(data.productId);
+    if (!product) {
+      return { exists: false };
+    }
+    return {
+      exists: true,
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+      }
+    };
+  }
+
+@MessagePattern('reduce-stock')
+async handleReduceStock(@Payload() data: any) {
+  const dto = plainToInstance(ReduceStockDto, data);
+  await validateOrReject(dto);
+  return this.productService.reduceStock(dto.productId, dto.quantity);
+}
 
 }
   
